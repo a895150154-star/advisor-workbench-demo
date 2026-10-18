@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>今日投资 · 投顾工作台 MVP Demo · 马宁 v1.1</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #fff;
+    --ink: #1a2332;
+    --muted: #5b6b7c;
+    --line: #e6ebf2;
+    --primary: #1a5cff;
+    --primary-soft: #e8efff;
+    --ok: #0a8f5a;
+    --ok-bg: #e8f7ef;
+    --warn: #b86a00;
+    --warn-bg: #fff4e5;
+    --ai: #6b3fa0;
+    --ai-bg: #f3eaff;
+    --fact: #0b6e99;
+    --fact-bg: #e6f5fb;
+    --rule: #8a5a00;
+    --rule-bg: #fff6e0;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(20,40,80,.06), 0 8px 24px rgba(20,40,80,.04);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 15px;
+  }
+  header.appbar {
+    background: #0f1c2e;
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  header .brand { font-weight: 700; font-size: 16px; letter-spacing: .02em; }
+  header .sub { font-size: 12px; opacity: .7; margin-top: 2px; }
+  .badge-demo {
+    background: #ff5f9d;
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 16px 16px 80px; }
+
+  /* Steps */
+  .steps {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 0 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .step-pill {
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .step-pill .n {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #eef1f6; color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .step-pill.active {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .step-pill.active .n { background: var(--primary); color: #fff; }
+  .step-pill.done { border-color: #b7e0c8; color: var(--ok); }
+  .step-pill.done .n { background: var(--ok); color: #fff; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 18px; }
+  .card .hint { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  .card h3 { margin: 16px 0 8px; font-size: 15px; }
+
+  .tag {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    letter-spacing: .02em;
+    vertical-align: middle;
+  }
+  .tag.fact { background: var(--fact-bg); color: var(--fact); }
+  .tag.rule { background: var(--rule-bg); color: var(--rule); }
+  .tag.ai { background: var(--ai-bg); color: var(--ai); }
+  .tag.mock { background: #f0f0f0; color: #666; }
+  .tag.wait { background: var(--warn-bg); color: var(--warn); }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+
+  .client-list { display: grid; gap: 10px; }
+  .client {
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .client:hover { border-color: #b8c9f5; background: #fafbff; }
+  .client.selected { border-color: var(--primary); background: var(--primary-soft); }
+  .client .name { font-weight: 700; font-size: 16px; }
+  .client .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    background: #eef1f6; color: var(--ink);
+    font-size: 12px; padding: 3px 8px; border-radius: 999px;
+  }
+
+  table.data {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  table.data th, table.data td {
+    text-align: left; padding: 8px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.data th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  table.data tr.selectable { cursor: pointer; }
+  table.data tr.selectable:hover { background: #f7f9fc; }
+  table.data tr.selected { background: var(--primary-soft); }
+  .up { color: #d23b3b; }
+  .down { color: var(--ok); }
+  .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .kv {
+    display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px;
+    font-size: 13px;
+  }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-weight: 600; }
+
+  .conclusion {
+    border-left: 3px solid var(--primary);
+    background: #f8faff;
+    padding: 10px 12px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13.5px;
+    margin: 10px 0;
+  }
+  .conclusion .tags { margin-bottom: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .nav-bar {
+    position: sticky; bottom: 0;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--line);
+    padding: 12px 16px;
+    display: flex; justify-content: space-between; gap: 10px;
+    max-width: 980px; margin: 0 auto;
+  }
+  button.btn {
+    border: none; border-radius: 8px;
+    padding: 10px 18px; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  button.btn:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--primary); color: #fff; }
+  button.ghost { background: #eef1f6; color: var(--ink); }
+  button.linkish {
+    background: none; border: none; color: var(--primary);
+    font-size: 13px; font-weight: 600; cursor: pointer; padding: 0;
+  }
+
+  .output-box {
+    border: 2px solid var(--primary);
+    background: linear-gradient(180deg, #f5f8ff 0%, #fff 40%);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .output-box .label {
+    font-size: 12px; font-weight: 700; color: var(--primary);
+    text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: 6px;
+  }
+  .output-box h3 { margin: 0 0 10px; font-size: 17px; }
+  .script {
+    background: #fff;
+    border: 1px dashed #b8c9f5;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 14.5px;
+    line-height: 1.7;
+  }
+  .reason-item {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .reason-item .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; flex-wrap: wrap; margin-bottom: 6px;
+  }
+  .reason-item .etf-name { font-weight: 700; }
+  .reason-item .alloc { color: var(--primary); font-weight: 700; font-size: 13px; }
+
+  .note-bar {
+    background: var(--warn-bg);
+    color: #6a4200;
+    border: 1px solid #f0d9a8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+  .disabled-card {
+    opacity: .55;
+    position: relative;
+  }
+  .disabled-card::after {
+    content: "首版不做 · 灰显说明";
+    position: absolute; top: 10px; right: 12px;
+    font-size: 11px; font-weight: 700;
+    background: #eee; color: #666;
+    padding: 2px 7px; border-radius: 4px;
+  }
+
+  .toggle-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .toggle {
+    border: 1.5px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .toggle.on {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .profile-edit .field {
+    margin-bottom: 10px;
+  }
+  .profile-edit label {
+    display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px;
+  }
+  .profile-edit select, .profile-edit input {
+    width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); font-size: 14px; background: #fff;
+  }
+  .check-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+  .check-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  footer.foot {
+    text-align: center; color: var(--muted); font-size: 12px;
+    padding: 8px 16px 24px;
+  }
+</style>
+</head>
+<body>
+<div style="position:sticky;top:0;z-index:9999;background:#fff4e5;color:#8a4b00;border-bottom:1px solid #f0c48a;padding:6px 12px;font-size:13px;text-align:center;">内部演示，不构成投资建议｜演示数据，客户为虚构</div>
+<header class="appbar">
+  <div>
+    <div class="brand">今日投资 · 投顾工作台 MVP</div>
+    <div class="sub">选客户 → 画像 → 赛道 → 指数 → ETF → 研究结论 + 配置建议 + 话术 · 马宁 v1.1（电子代码按李勤核实）</div>
+  </div>
+  <span class="badge-demo">Demo · 演示数据</span>
+</header>
+
+<div class="wrap">
+  <nav class="steps" id="stepNav" aria-label="流程步骤"></nav>
+
+  <div class="note-bar">
+    本页按已定 MVP 范围演示（基于李勤 v1 底稿 + 马宁字段核对；<b>v1.1</b> 电子路径按李勤 20261018《电子与数据口径核实》换真码）。不展示综合得分、不承诺「31 赛道 / 86 指数 / 132 ETF」覆盖数字；AI 速览本期不进；主题概念扩展、组合归因首版不做。<br>
+    <b>演示快照数据时间</b>：通信路径行情/收益约对齐 2026-09-02～09-03，规模/费率/财务 2026 中报；电子路径规模/跟踪误差/收益等标「待数据侧核对」，不编假数。<br>
+    <b>行业配置口径</b>：凡用跟踪 ETF 持仓顶替指数行业配置处，一律标明「口径：跟踪 ETF 持仓顶替，非指数官方权重」。
+  </div>
+
+  <div class="legend">
+    <span>结论标注：</span>
+    <span><span class="tag fact">事实</span> 可核对的行情/档案数据</span>
+    <span><span class="tag rule">规则</span> 既定筛选或映射规则</span>
+    <span><span class="tag ai">AI 解读</span> 模型归纳，需投顾确认</span>
+    <span><span class="tag wait">待核实</span> 口径或数据源未锁定</span>
+  </div>
+
+  <!-- Step 1: 选客户 -->
+  <section class="panel active" data-step="1">
+    <div class="card">
+      <h2>① 选客户</h2>
+      <p class="hint">从签约客户中选一位，进入持仓推断画像。以下为演示客户。</p>
+      <div class="client-list" id="clientList"></div>
+    </div>
+  </section>
+
+  <!-- Step 2: 确认画像 -->
+  <section class="panel" data-step="2">
+    <div class="card">
+      <h2>② 确认画像 <span class="tag rule">规则</span></h2>
+      <p class="hint">系统从持仓结构推断风险偏好、持有周期与关注赛道，投顾确认后方可进入研究。推断规则为演示口径，正式版需产品定稿。</p>
+      <div id="holdingsBlock"></div>
+      <h3>推断结果（可改）</h3>
+      <div class="profile-edit grid2" id="profileEdit"></div>
+      <div class="conclusion" style="margin-top:14px">
+        <div class="tags"><span class="tag rule">规则</span><span class="tag ai">AI 解读</span></div>
+        <div id="profileSummary"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 3: 荐赛道 -->
+  <section class="panel" data-step="3">
+    <div class="card">
+      <h2>③ 荐赛道 · 申万一级</h2>
+      <p class="hint">通信为主路径（字段已核对）；电子用于验证跨行业流程——代码已按李勤核实表换真码，规模/TE/收益待数据侧核对。只用申万一级，不做二级半导体评分。</p>
+      <div class="toggle-row" id="trackToggle"></div>
+      <div id="trackDetail"></div>
+      <div class="card disabled-card" style="margin-top:12px;box-shadow:none">
+        <h3 style="margin-top:0">产业链样例（通信）</h3>
+        <p style="font-size:13px;color:var(--muted);margin:0">光模块 / 设备 / 光纤光缆 / 运营商 — 通信有样例可演示，POC 不要求换行业重做。产业链与深度报告首版不作为验收项。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 4: 比指数 -->
+  <section class="panel" data-step="4">
+    <div class="card">
+      <h2>④ 比指数</h2>
+      <p class="hint">赛道下相关指数对比。关联规则用简单规则（行业权重达标），不承诺复杂算法。选一只进入 ETF。</p>
+      <div id="indexBlock"></div>
+    </div>
+  </section>
+
+  <!-- Step 5: 挑 ETF -->
+  <section class="panel" data-step="5">
+    <div class="card">
+      <h2>⑤ 挑 ETF</h2>
+      <p class="hint">复用现有 ETF 诊断字段（规模、费率、跟踪误差、收益等）。按画像筛候选，勾选后进入输出。</p>
+      <div id="etfBlock"></div>
+    </div>
+  </section>
+
+  <!-- Step 6: 输出 -->
+  <section class="panel" data-step="6">
+    <div class="card" style="border-color:#b8c9f5">
+      <h2>⑥ 给投顾的输出</h2>
+      <p class="hint">三样输出：① 研究结论（投顾自用）② 配置建议 ③ 客户话术。对外主要拿后两样；每条标清事实/规则/AI。</p>
+    </div>
+    <div id="outputBlock"></div>
+  </section>
+</div>
+
+<div class="nav-bar">
+  <button class="btn ghost" id="btnPrev" type="button">上一步</button>
+  <button class="btn primary" id="btnNext" type="button">下一步</button>
+</div>
+<footer class="foot">马宁 · 2026-10-18 · 投顾工作台 MVP Demo v1.1（基于李勤底稿；电子代码来源李勤 20261018 核实表）· 数据为演示/核对口径，不构成投资建议</footer>
+
+<script>
+(function () {
+  const STEPS = [
+    { id: 1, name: '选客户' },
+    { id: 2, name: '确认画像' },
+    { id: 3, name: '荐赛道' },
+    { id: 4, name: '比指数' },
+    { id: 5, name: '挑 ETF' },
+    { id: 6, name: '输出' }
+  ];
+
+  const CLIENTS = [
+    {
+      id: 'c1',
+      name: '王女士',
+      branch: '上海 · 静安营业部',
+      aum: '286 万',
+      holdings: [
+        { name: '沪深300ETF', code: '510300', weight: 28, type: '宽基' },
+        { name: '通信ETF国泰', code: '515880', weight: 18, type: '行业' },
+        { name: '创业板ETF', code: '159915', weight: 15, type: '宽基' },
+        { name: '债券ETF', code: '511010', weight: 22, type: '固收' },
+        { name: '现金/货币', code: '—', weight: 17, type: '现金' }
+      ],
+      inferred: {
+        risk: '中等',
+        horizon: '偏中期（6–18 个月）',
+        sectors: ['通信', '电子'],
+        style: '核心宽基 + 成长行业卫星'
+      }
+    },
+    {
+      id: 'c2',
+      name: '李先生',
+      branch: '杭州 · 西湖营业部',
+      aum: '120 万',
+      holdings: [
+        { name: '中证500ETF', code: '510500', weight: 35, type: '宽基' },
+        { name: '天弘中证电子ETF', code: '159997', weight: 25, type: '行业' },
+        { name: '货币基金', code: '—', weight: 40, type: '现金' }
+      ],
+      inferred: {
+        risk: '中等偏积极',
+        horizon: '偏中期',
+        sectors: ['电子', '通信'],
+        style: '中小盘成长为主'
+      }
+    }
+  ];
+
+  // 演示快照：行情约 2026-09-02/03；规模/费率/财务 2026 中报。不展示综合得分。
+  const DATA_ASOF = '行情约 2026-09-02～09-03；规模/费率/财务 2026 中报';
+  const TRACKS = {
+    通信: {
+      code: '730000',
+      level: '申万一级',
+      status: '主路径 · 字段已核对',
+      thin: false,
+      facts: [
+        { k: '行业代码', v: '730000', api: 'industries / chain/industry-info' },
+        { k: '近 1 月涨跌', v: '+4.82%', cls: 'up', api: 'industry/quote · market-stats' },
+        { k: '近 1 年（赛道侧）', v: '设备链弹性较高（定性）', cls: '', api: 'industry/market-stats（return*）可核对；文案为解读' }
+      ],
+      metrics: [
+        { name: '估值观察（指数侧）', value: '931160 PE 45.53x / PB 8.38x（偏高）', tag: 'fact', note: '✅ index/valuation；非赛道综合分' },
+        { name: '景气/叙事观察', value: '光模块与算力需求叙事强', tag: 'ai', note: '⚠️ 定性 AI 解读；景气度接口有 prosperity-index，综合分不演示' },
+        { name: '拥挤度', value: '中性偏低（演示）', tag: 'wait', note: '❓ 计算口径待产品确认；不对外当真实评分' }
+      ],
+      conclusion: {
+        tags: ['rule', 'ai'],
+        text: '按画像「关注通信 + 中等风险」，优先走通信主路径：先比已核对指数，再挑流动性与跟踪质量好的通信 ETF。不对外承诺综合得分；是否加仓由投顾确认。'
+      },
+      indexes: [
+        {
+          code: '399389', name: '国证通信',
+          ret1m: '+13.08%', ret1y: '+43.13%', vol: '41.84%',
+          pe: '—', note: '综合表达：光模块/设备/光纤/运营商',
+          pickReason: '收益与风险相对均衡，适合中等风险客户作赛道主表达',
+          apiHint: '代码/名称 ✅ index/basic-info；近1月/1年 ✅ index/range-gains；波动率 🔧 由 index/quotes 计算'
+        },
+        {
+          code: '000936', name: '800通信',
+          ret1m: '+5.33%', ret1y: '+36.90%', vol: '38.46%',
+          pe: '28.20', note: '波动与回撤相对克制，估值约束更好',
+          pickReason: '更适合重视回撤与估值约束的配置',
+          apiHint: 'PE ✅ index/valuation；近1月/1年 ✅ index/range-gains'
+        },
+        {
+          code: '931160', name: '中证全指通信设备',
+          ret1m: '+11.60%', ret1y: '+53.40%', vol: '49.37%',
+          pe: '45.53', note: '高弹性设备/光通信；波动与估值更高',
+          pickReason: '弹性高，适合卫星仓而非唯一底仓',
+          apiHint: '详情样例指数；相关 ETF 映射 ✅ fund/basic-info 等'
+        }
+      ],
+      etfs: [
+        {
+          code: '515050', name: '通信ETF华夏',
+          index: '中证5G通信主题 931079',
+          size: '249.91 亿', fee: '0.60%', te: '0.34%',
+          ret1y: '+55.52%', mdd: '38.51%', liq: '20日均约 9.92 亿',
+          fit: '综合配置优先：跟踪误差小、收益回撤更均衡',
+          suggest: 45,
+          apiHint: '规模 ✅ fund/financial-indicators(navEnd)；跟踪误差 ✅ fund/performance-attribution；近1年 ✅ fund/return-rate；费率 ✅ fund/fee-structures；日均成交 🔧 fund/daily-quotes'
+        },
+        {
+          code: '515880', name: '通信ETF国泰',
+          index: '中证全指通信设备 931160',
+          size: '590.19 亿', fee: '0.61%', te: '0.48%',
+          ret1y: '+49.19%', mdd: '40.87%', liq: '20日均约 33.06 亿',
+          fit: '大额交易/流动性优先；波动与前十大集中度更高',
+          suggest: 35,
+          apiHint: '同上；赛道归属 ✅ industry/etf-mapping'
+        },
+        {
+          code: '159994', name: '通信ETF银华',
+          index: '中证5G通信主题 931079',
+          size: '50.40 亿', fee: '0.64%', te: '0.68%',
+          ret1y: '+55.33%', mdd: '—', liq: '20日均约 2.37 亿',
+          fit: '同指数替代华夏；规模偏小，作卫星或观察',
+          suggest: 20,
+          apiHint: '与华夏同跟踪指数；规模/误差/收益均可核对'
+        }
+      ]
+    },
+    电子: {
+      code: '申万一级·电子',
+      level: '申万一级',
+      status: '跨行业验证 · 代码已换真码；规模/TE/收益待数据侧核对',
+      thin: true,
+      sourceNote: '电子指数/ETF 代码来源：李勤 20261018《电子与数据口径核实》',
+      facts: [
+        { k: '行业层级', v: '申万一级「电子」', cls: '', api: '名称映射 ✅；与通信同属一级，不做二级半导体评分' },
+        { k: '优先表达', v: '指数 930652 + ETF 159997', cls: '', api: '✅ 李勤核实表建议 POC 优先' },
+        { k: '近1月 / 近1年等行情', v: '待数据侧核对', cls: '', api: '❓ 未按通信样例拉 Investoday；不编假数' }
+      ],
+      metrics: [
+        { name: '指数/ETF 映射', value: '930652→159997（优先）；931461→515260·515320；H30184→512480（偏半导体）', tag: 'fact', note: '✅ 代码/名称可映射（李勤核实表）；规模/TE/收益须再核后才能当已核对' },
+        { name: '拥挤度', value: '不展示数值', tag: 'wait', note: '一级口径原则上可复用；电子是否已有生产分值未核实 → 本期不展示拥挤度数字' }
+      ],
+      conclusion: {
+        tags: ['rule', 'wait'],
+        text: '电子用于验证「换一级行业流程能否跑通」。优先 930652（中证电子）+ 159997（天弘中证电子ETF）；可选 931461 + 515260；H30184/512480 仅作偏半导体暴露，勿当成申万一级电子全覆盖。规模/跟踪误差/收益一律「待数据侧核对」。产业链与 AI 速览本期不做。'
+      },
+      indexes: [
+        {
+          code: '930652', name: '中证电子（CS电子）',
+          ret1m: '待数据侧核对', ret1y: '待数据侧核对', vol: '待数据侧核对',
+          pe: '待数据侧核对', note: '【优先】一级电子主表达；半导体/电脑/电子设备/消费电子等约 100 只',
+          pickReason: '申万一级「电子」优先表达；与 159997 配对',
+          apiHint: '✅ 代码/名称：李勤核实表 + 中证编制方案；收益/波动/PE 待数据侧核对',
+          preferred: true
+        },
+        {
+          code: '931461', name: '中证电子50',
+          ret1m: '待数据侧核对', ret1y: '待数据侧核对', vol: '待数据侧核对',
+          pe: '待数据侧核对', note: '电子/半导体中市值最大约 50 只；可选加强度',
+          pickReason: '可选表达；对应 ETF 515260 / 515320',
+          apiHint: '✅ 代码/名称已映射；收益等待数据侧核对'
+        },
+        {
+          code: 'H30184', name: '中证全指半导体产品与设备',
+          ret1m: '待数据侧核对', ret1y: '待数据侧核对', vol: '待数据侧核对',
+          pe: '待数据侧核对', note: '偏二级主题（半导体），非申万一级全电子覆盖',
+          pickReason: '仅作偏半导体暴露；勿当一级电子全覆盖',
+          apiHint: '✅ 代码已映射；⚠️ 主题偏窄，非一级全覆盖'
+        }
+      ],
+      etfs: [
+        {
+          code: '159997', name: '天弘中证电子ETF', index: '中证电子 930652',
+          size: '待数据侧核对', fee: '待数据侧核对', te: '待数据侧核对',
+          ret1y: '待数据侧核对', mdd: '—', liq: '待数据侧核对',
+          fit: '一级电子优先工具（跟踪 930652），作跨行业验证核心仓',
+          suggest: 55,
+          apiHint: '✅ 代码/跟踪：李勤核实表；规模/费率/TE/收益 待数据侧核对',
+          preferred: true
+        },
+        {
+          code: '515260', name: '华宝中证电子50ETF', index: '中证电子50 931461',
+          size: '待数据侧核对', fee: '待数据侧核对', te: '待数据侧核对',
+          ret1y: '待数据侧核对', mdd: '—', liq: '待数据侧核对',
+          fit: '电子50 表达；可作卫星或与 930652 对照',
+          suggest: 25,
+          apiHint: '✅ 跟踪 931461；数值待数据侧核对'
+        },
+        {
+          code: '515320', name: '华安中证电子50ETF', index: '中证电子50 931461',
+          size: '待数据侧核对', fee: '待数据侧核对', te: '待数据侧核对',
+          ret1y: '待数据侧核对', mdd: '—', liq: '待数据侧核对',
+          fit: '同跟踪 931461 的替代工具；观察流动性后选用',
+          suggest: 10,
+          apiHint: '✅ 跟踪 931461；数值待数据侧核对'
+        },
+        {
+          code: '512480', name: '国联安半导体ETF', index: '中证全指半导体 H30184',
+          size: '待数据侧核对', fee: '待数据侧核对', te: '待数据侧核对',
+          ret1y: '待数据侧核对', mdd: '—', liq: '待数据侧核对',
+          fit: '偏半导体暴露；勿当成申万一级电子全覆盖',
+          suggest: 10,
+          apiHint: '✅ 跟踪 H30184；⚠️ 主题偏窄；数值待数据侧核对'
+        }
+      ]
+    }
+  };
+
+  const state = {
+    step: 1,
+    clientId: 'c1',
+    profile: null,
+    track: '通信',
+    indexCode: null,
+    etfCodes: []
+  };
+
+  function $(sel) { return document.querySelector(sel); }
+  function el(html) {
+    const t = document.createElement('template');
+    t.innerHTML = html.trim();
+    return t.content;
+  }
+  function tagHtml(kind) {
+    const map = { fact: '事实', rule: '规则', ai: 'AI 解读', wait: '待核实', mock: '演示' };
+    return `<span class="tag ${kind}">${map[kind] || kind}</span>`;
+  }
+  function client() { return CLIENTS.find(c => c.id === state.clientId); }
+
+  function ensureProfile() {
+    const c = client();
+    if (!state.profile || state.profile._from !== c.id) {
+      state.profile = { ...c.inferred, sectors: [...c.inferred.sectors], _from: c.id };
+    }
+  }
+
+  function renderNav() {
+    const nav = $('#stepNav');
+    nav.innerHTML = '';
+    STEPS.forEach(s => {
+      const cls = ['step-pill'];
+      if (s.id === state.step) cls.push('active');
+      else if (s.id < state.step) cls.push('done');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = cls.join(' ');
+      b.innerHTML = `<span class="n">${s.id}</span>${s.name}`;
+      b.onclick = () => {
+        if (s.id <= state.step || canEnter(s.id)) go(s.id);
+      };
+      nav.appendChild(b);
+    });
+  }
+
+  function canEnter(id) {
+    if (id === 1) return true;
+    if (id >= 2 && !state.clientId) return false;
+    if (id >= 4 && !state.track) return false;
+    if (id >= 5 && !state.indexCode) return false;
+    if (id >= 6 && state.etfCodes.length === 0) return false;
+    return id <= state.step + 1;
+  }
+
+  function go(n) {
+    if (n < 1 || n > 6) return;
+    if (n === 2) ensureProfile();
+    if (n === 4) {
+      const idxs = TRACKS[state.track].indexes;
+      if (!state.indexCode || !idxs.find(i => i.code === state.indexCode)) {
+        state.indexCode = idxs[0].code;
+      }
+    }
+    if (n === 5) {
+      const etfs = TRACKS[state.track].etfs;
+      if (!state.etfCodes.length) {
+        state.etfCodes = state.track === '通信' ? ['515050', '515880'] : [etfs[0].code];
+      } else {
+        state.etfCodes = state.etfCodes.filter(c => etfs.find(e => e.code === c));
+        if (!state.etfCodes.length) state.etfCodes = [etfs[0].code];
+      }
+    }
+    state.step = n;
+    document.querySelectorAll('.panel').forEach(p => {
+      p.classList.toggle('active', Number(p.dataset.step) === n);
+    });
+    renderNav();
+    renderStep();
+    updateButtons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateButtons() {
+    $('#btnPrev').disabled = state.step <= 1;
+    const next = $('#btnNext');
+    if (state.step === 6) {
+      next.textContent = '完成 · 回到选客户';
+    } else {
+      next.textContent = '下一步';
+    }
+    let ok = true;
+    if (state.step === 1 && !state.clientId) ok = false;
+    if (state.step === 5 && state.etfCodes.length === 0) ok = false;
+    next.disabled = !ok && state.step !== 6;
+  }
+
+  function renderClients() {
+    const box = $('#clientList');
+    box.innerHTML = '';
+    CLIENTS.forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'client' + (state.clientId === c.id ? ' selected' : '');
+      d.innerHTML = `
+        <div class="name">${c.name}</div>
+        <div class="meta">${c.branch} · 签约规模 ${c.aum} <span class="tag mock">演示</span></div>
+        <div class="chips">
+          ${c.inferred.sectors.map(s => `<span class="chip">关注 ${s}</span>`).join('')}
+          <span class="chip">${c.inferred.risk}</span>
+          <span class="chip">${c.inferred.horizon}</span>
+        </div>`;
+      d.onclick = () => {
+        state.clientId = c.id;
+        state.profile = null;
+        state.track = c.inferred.sectors[0] || '通信';
+        state.indexCode = null;
+        state.etfCodes = [];
+        renderClients();
+        updateButtons();
+      };
+      box.appendChild(d);
+    });
+  }
+
+  function renderProfile() {
+    ensureProfile();
+    const c = client();
+    const h = $('#holdingsBlock');
+    h.innerHTML = `
+      <h3 style="margin-top:0">当前持仓（演示） <span class="tag mock">演示</span></h3>
+      <table class="data">
+        <thead><tr><th>标的</th><th>代码</th><th>类型</th><th>权重</th></tr></thead>
+        <tbody>
+          ${c.holdings.map(x => `<tr><td>${x.name}</td><td class="mono">${x.code}</td><td>${x.type}</td><td class="mono">${x.weight}%</td></tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    const p = state.profile;
+    const edit = $('#profileEdit');
+    edit.innerHTML = `
+      <div class="field">
+        <label>风险偏好</label>
+        <select id="pfRisk">
+          ${['保守','中等偏保守','中等','中等偏积极','积极'].map(r =>
+            `<option ${r===p.risk?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>持有周期</label>
+        <select id="pfHorizon">
+          ${['偏短期（&lt;6 个月）','偏中期（6–18 个月）','偏中期','偏长期（&gt;18 个月）'].map(r =>
+            `<option ${r===p.horizon?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>关注赛道（申万一级）</label>
+        <div class="check-row">
+          ${['通信','电子'].map(s =>
+            `<label><input type="checkbox" value="${s}" ${p.sectors.includes(s)?'checked':''} class="pfSec"/> ${s}</label>`
+          ).join('')}
+        </div>
+      </div>`;
+
+    const bind = () => {
+      state.profile.risk = $('#pfRisk').value;
+      state.profile.horizon = $('#pfHorizon').value;
+      state.profile.sectors = [...document.querySelectorAll('.pfSec:checked')].map(i => i.value);
+      if (!state.profile.sectors.length) state.profile.sectors = ['通信'];
+      if (!state.profile.sectors.includes(state.track)) state.track = state.profile.sectors[0];
+      $('#profileSummary').innerHTML = `客户 <b>${c.name}</b>：风险「${state.profile.risk}」，周期「${state.profile.horizon}」，关注 ${state.profile.sectors.join('、')}。建议先走「${state.profile.sectors[0]}」研究链路，再视需要验证另一行业。`;
+    };
+    edit.querySelectorAll('select, input').forEach(i => i.addEventListener('change', bind));
+    bind();
+  }
+
+  function renderTrack() {
+    const box = $('#trackToggle');
+    box.innerHTML = '';
+    ['通信', '电子'].forEach(name => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'toggle' + (state.track === name ? ' on' : '');
+      b.textContent = name + (name === '通信' ? '（主）' : '（验证）');
+      b.onclick = () => {
+        state.track = name;
+        const tr = TRACKS[name];
+        const prefIx = (tr.indexes || []).find(i => i.preferred) || (tr.indexes || [])[0];
+        state.indexCode = prefIx ? prefIx.code : null;
+        const prefEt = (tr.etfs || []).find(e => e.preferred);
+        state.etfCodes = prefEt ? [prefEt.code] : [];
+        renderTrack();
+      };
+      box.appendChild(b);
+    });
+
+    const t = TRACKS[state.track];
+    const detail = $('#trackDetail');
+    detail.innerHTML = `
+      <div class="grid2">
+        <div>
+          <div class="kv">
+            <div class="k">赛道</div><div class="v">${state.track}</div>
+            <div class="k">层级</div><div class="v">${t.level}</div>
+            <div class="k">状态</div><div class="v">${t.status} ${t.thin ? tagHtml('wait') : tagHtml('ok')}</div>
+            ${t.facts.map(f => `<div class="k">${f.k}</div><div class="v ${f.cls||''}">${f.v} ${t.thin?tagHtml('wait'):tagHtml('fact')}<div style="font-weight:400;color:var(--muted);font-size:11px;margin-top:2px">${f.api||''}</div></div>`).join('')}
+          </div>
+        </div>
+        <div>
+          ${t.metrics.map(m => `
+            <div class="conclusion">
+              <div class="tags">${tagHtml(m.tag)}</div>
+              <b>${m.name}</b>：${m.value}<br><span style="color:var(--muted);font-size:12px">${m.note}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="conclusion">
+        <div class="tags">${t.conclusion.tags.map(tagHtml).join('')}</div>
+        ${t.conclusion.text}
+      </div>
+      ${t.sourceNote ? `<p style="font-size:12px;color:var(--muted);margin:8px 0 0">${tagHtml('fact')} ${t.sourceNote}</p>` : ''}
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">说明：页面不展示「综合得分」与覆盖数字；不展示未核实拥挤度数字；AI 速览本期不进。通信六维分纪要称现有能力但接口清单无评分接口，对外以可核对行情/估值/映射为主。数据时间：${DATA_ASOF}</p>
+    `;
+  }
+
+  function renderIndexes() {
+    const t = TRACKS[state.track];
+    const box = $('#indexBlock');
+    const pendingCls = (v) => (String(v).includes('待') || v === '—' ? 'pending' : 'up');
+    const rows = t.indexes.map(ix => `
+      <tr class="selectable ${state.indexCode===ix.code?'selected':''}" data-code="${ix.code}">
+        <td><b>${ix.name}</b>${ix.preferred ? ' <span class="tag fact">优先</span>' : ''}<br><span class="mono" style="color:var(--muted)">${ix.code}</span></td>
+        <td class="mono ${pendingCls(ix.ret1m)}">${ix.ret1m}</td>
+        <td class="mono ${pendingCls(ix.ret1y)}">${ix.ret1y}</td>
+        <td class="mono ${String(ix.vol).includes('待')?'pending':''}">${ix.vol}</td>
+        <td class="mono ${String(ix.pe).includes('待')?'pending':''}">${ix.pe}</td>
+        <td style="font-size:12px;color:var(--muted)">${ix.note}</td>
+      </tr>`).join('');
+
+    box.innerHTML = `
+      <p style="font-size:13px;margin:0 0 8px">当前赛道：<b>${state.track}</b>
+        ${t.thin ? tagHtml('wait') + ' 电子：代码已换真码，收益等待数据侧核对；优先 930652' : tagHtml('fact') + ' 通信样例已核对的 3 只（不演示「86 个」覆盖数字）'}
+        · <span style="color:var(--muted)">数据时间 ${DATA_ASOF}</span>
+      </p>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>指数</th><th>近1月</th><th>近1年</th><th>波动率</th><th>PE</th><th>说明</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="conclusion" id="indexConclusion"></div>
+      <div class="caliber-warn">口径：跟踪 ETF 持仓顶替，非指数官方权重。本页若展示行业配置/暴露，一律按跟踪 ETF 持仓近似，不得写成指数官方行业配置。</div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">字段口径：代码/名称 ✅ index/basic-info（电子代码另据李勤核实表）；近1月/1年 ✅ index/range-gains（电子=待数据侧核对）；PE ✅ index/valuation；波动率 🔧 由 index/quotes 计算属 <span class="tag rule">规则</span>。不展示指数综合得分；不展示未核实拥挤度数字。</p>
+    `;
+    box.querySelectorAll('tr.selectable').forEach(tr => {
+      tr.onclick = () => {
+        state.indexCode = tr.dataset.code;
+        renderIndexes();
+      };
+    });
+    const ix = t.indexes.find(i => i.code === state.indexCode) || t.indexes[0];
+    $('#indexConclusion').innerHTML = `
+      <div class="tags">${tagHtml('rule')}${tagHtml('ai')}</div>
+      已选 <b>${ix.name}（${ix.code}）</b>：${ix.pickReason}。下一步按该指数/赛道映射挑选 ETF。
+      <div style="margin-top:6px;font-size:12px;color:var(--muted)">${ix.apiHint || ''}</div>
+    `;
+  }
+
+  function renderEtfs() {
+    const t = TRACKS[state.track];
+    const box = $('#etfBlock');
+    const pend = (v) => (String(v).includes('待') || v === '—' ? 'pending' : '');
+    const rows = t.etfs.map(e => {
+      const checked = state.etfCodes.includes(e.code) ? 'checked' : '';
+      return `
+        <tr class="selectable ${checked?'selected':''}" data-code="${e.code}">
+          <td><input type="checkbox" ${checked} data-code="${e.code}" class="etfChk"/> <b>${e.name}</b>${e.preferred ? ' <span class="tag fact">优先</span>' : ''}<br><span class="mono" style="color:var(--muted)">${e.code}</span></td>
+          <td style="font-size:12px">${e.index}</td>
+          <td class="mono ${pend(e.size)}">${e.size}</td>
+          <td class="mono ${pend(e.fee)}">${e.fee}</td>
+          <td class="mono ${pend(e.te)}">${e.te}</td>
+          <td class="mono ${pend(e.ret1y)}">${e.ret1y}</td>
+          <td class="mono ${pend(e.liq)}">${e.liq}</td>
+          <td style="font-size:12px">${e.fit}</td>
+        </tr>`;
+    }).join('');
+
+    box.innerHTML = `
+      <p style="font-size:13px;margin:0 0 8px">跟踪/映射自赛道「${state.track}」· 已选指数 <b>${state.indexCode || '—'}</b>
+        ${t.thin ? tagHtml('wait') : tagHtml('fact')}
+      </p>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>ETF</th><th>跟踪指数</th><th>规模</th><th>费率</th><th>跟踪误差</th><th>近1年</th><th>流动性</th><th>画像适配</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="conclusion">
+        <div class="tags">${tagHtml('fact')}${tagHtml('rule')}${tagHtml('ai')}</div>
+        勾选 1–3 只进入配置建议。规模/费率/跟踪误差/收益为可核对字段（见核对表 ✅）；日均成交为 🔧；「是否适合该客户」为规则+AI，需投顾确认。不展示 ETF 综合得分、不演示「132 只」覆盖数字。
+        ${t.thin ? ' 电子路径：代码已换真码，规模/费率/TE/收益「待数据侧核对」，' + tagHtml('wait') : ''}
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">数据时间 ${DATA_ASOF}</div>
+      </div>
+    `;
+    box.querySelectorAll('.etfChk').forEach(chk => {
+      chk.addEventListener('click', ev => ev.stopPropagation());
+      chk.addEventListener('change', () => {
+        const code = chk.dataset.code;
+        if (chk.checked) {
+          if (!state.etfCodes.includes(code)) state.etfCodes.push(code);
+        } else {
+          state.etfCodes = state.etfCodes.filter(c => c !== code);
+        }
+        renderEtfs();
+        updateButtons();
+      });
+    });
+    box.querySelectorAll('tr.selectable').forEach(tr => {
+      tr.onclick = (e) => {
+        if (e.target.classList.contains('etfChk')) return;
+        const code = tr.dataset.code;
+        const chk = tr.querySelector('.etfChk');
+        chk.checked = !chk.checked;
+        chk.dispatchEvent(new Event('change'));
+      };
+    });
+  }
+
+  function buildScript(c, p, track, picks) {
+    const names = picks.map(e => `${e.name}（${e.code}）`).join('、');
+    if (track === '通信') {
+      return `王女士您好（演示）：结合您目前偏中等风险、持有周期偏中期，以及组合里已有通信相关暴露，我们梳理了一版「通信」方向的工具选择。核心建议以流动性与跟踪质量较好的通信 ETF 为主（如 ${names}），用「核心 + 卫星」控制波动：底仓侧重综合表达与低跟踪误差，卫星可保留一点设备链弹性。这不构成投资建议，具体比例与买卖时点仍由您和投顾根据账户情况确认。`.replace('王女士', c.name);
+    }
+    return `${c.name}您好（演示）：您关注电子方向，我们按申万一级「电子」走了一遍研究到配置的流程。当前优先锚定中证电子（930652）及跟踪它的天弘中证电子ETF（159997），组合工具为 ${names}。规模、跟踪误差与收益等仍待数据侧核对，这版仅供内部对齐流程；具体比例与买卖时点由您和投顾确认。`.replace('王女士', c.name);
+  }
+
+  function renderOutput() {
+    const c = client();
+    ensureProfile();
+    const p = state.profile;
+    const t = TRACKS[state.track];
+    const picks = t.etfs.filter(e => state.etfCodes.includes(e.code));
+    // normalize suggest weights
+    const sum = picks.reduce((a, e) => a + (e.suggest || 0), 0) || 1;
+    const withW = picks.map(e => ({ ...e, w: Math.round((e.suggest || 0) / sum * 100) }));
+    // fix rounding
+    if (withW.length) {
+      const s2 = withW.reduce((a, e) => a + e.w, 0);
+      withW[0].w += (100 - s2);
+    }
+
+    const ix = t.indexes.find(i => i.code === state.indexCode) || t.indexes[0];
+    const reasons = withW.map(e => `
+      <div class="reason-item">
+        <div class="head">
+          <span class="etf-name">${e.name} <span class="mono" style="color:var(--muted);font-weight:500">${e.code}</span></span>
+          <span class="alloc">建议占比约 ${e.w}%</span>
+        </div>
+        <div style="font-size:13px;margin-bottom:6px">跟踪：${e.index} · 规模 ${e.size} · 费率 ${e.fee} · 跟踪误差 ${e.te} · 近1年 ${e.ret1y} · ${e.liq}</div>
+        <div style="margin-bottom:4px">${t.thin
+          ? tagHtml('wait') + ' 规模 / 费率 / 跟踪误差 / 近1年收益：待数据侧核对（不编假数）。'
+          : tagHtml('fact') + ' 规模 / 费率 / 跟踪误差 / 近1年收益为可核对字段（通信路径已对照字段核对表 ✅）。'}</div>
+        <div style="margin-bottom:4px;font-size:12px;color:var(--muted)">${e.apiHint || ''}</div>
+        <div style="margin-bottom:4px">${tagHtml('rule')} 按画像「${p.risk} / ${p.horizon}」筛工具；${t.thin ? '电子优先 159997（跟踪 930652），515260 等作可选；H30184/512480 仅偏半导体。' : '通信主路径优先综合表达（华夏），国泰作流动性卫星。'}</div>
+        <div>${tagHtml('ai')} ${e.fit}</div>
+        ${t.thin ? `<div style="margin-top:4px">${tagHtml('wait')} 电子路径代码已按李勤核实表换真码；占比仅流程演示。行业配置若涉及暴露拆解：口径为跟踪 ETF 持仓顶替，非指数官方权重。</div>` : ''}
+      </div>
+    `).join('');
+
+    const script = buildScript(c, p, state.track, withW);
+
+    $('#outputBlock').innerHTML = `
+      <div class="output-box">
+        <div class="label">输出一 · 研究结论（投顾自用）</div>
+        <h3>赛道 → 指数 → ETF 链路摘要</h3>
+        <div class="kv" style="margin-bottom:12px">
+          <div class="k">客户</div><div class="v">${c.name}</div>
+          <div class="k">画像</div><div class="v">${p.risk} · ${p.horizon} · ${p.sectors.join('、')}</div>
+          <div class="k">赛道</div><div class="v">申万一级 · ${state.track}${t.thin ? ' ' + tagHtml('wait') : ''}</div>
+          <div class="k">锚定指数</div><div class="v">${ix ? ix.name + '（' + ix.code + '）' : (state.indexCode || '—')}</div>
+          <div class="k">候选 ETF</div><div class="v">${withW.map(e => e.code).join('、') || '—'}</div>
+          <div class="k">数据时间</div><div class="v">${DATA_ASOF} ${tagHtml('mock')}</div>
+        </div>
+        <div class="conclusion">
+          <div class="tags">${tagHtml('fact')}${tagHtml('rule')}${tagHtml('ai')}</div>
+          ${t.thin
+            ? '电子路径验证跨行业流程：指数/ETF 已换真码（优先 930652 + 159997，来源李勤 20261018 核实表）；规模/TE/收益待数据侧核对。不下综合得分，不展示未核实拥挤度，不做 AI 速览。'
+            : `通信主路径：已选指数「${ix ? ix.name : ''}」——${ix ? ix.pickReason : ''}；ETF 侧以可核对的规模/费率/跟踪误差/收益支撑「核心+卫星」建议。不对外展示综合得分。`}
+        </div>
+      </div>
+
+      <div class="output-box">
+        <div class="label">输出二 · 配置建议</div>
+        <h3>ETF 候选组合 + 为什么</h3>
+        <div class="kv" style="margin-bottom:12px">
+          <div class="k">客户</div><div class="v">${c.name}</div>
+          <div class="k">画像</div><div class="v">${p.risk} · ${p.horizon} · ${p.sectors.join('、')}</div>
+          <div class="k">赛道</div><div class="v">申万一级 · ${state.track}</div>
+          <div class="k">锚定指数</div><div class="v">${state.indexCode || '—'}</div>
+          <div class="k">数据时间</div><div class="v">${DATA_ASOF} ${tagHtml('mock')}</div>
+        </div>
+        ${reasons}
+        <div class="conclusion">
+          <div class="tags">${tagHtml('ai')}${tagHtml('rule')}</div>
+          结构建议：核心仓偏综合表达与低跟踪误差，卫星仓保留弹性/流动性工具；总权益卫星仓位需结合客户已有持仓再平衡。投顾确认后再对客。
+        </div>
+      </div>
+
+      <div class="output-box">
+        <div class="label">输出三 · 客户话术（一条）</div>
+        <h3>按画像改写 · 可直接转给客户</h3>
+        <div class="script">${script}</div>
+        <p style="font-size:12px;color:var(--muted);margin:10px 0 0">
+          ${tagHtml('ai')} 话术由模板按画像填空生成，首版一条即可；投顾可改写。不自动生成长报告 / 调仓理由长文。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">首版不做（提醒）</h3>
+        <div class="chips">
+          <span class="chip">主题概念扩展</span>
+          <span class="chip">组合归因</span>
+          <span class="chip">AI 速览（待研报原文）</span>
+          <span class="chip">综合得分对外承诺</span>
+          <span class="chip">覆盖数字 31/86/132</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderStep() {
+    if (state.step === 1) renderClients();
+    if (state.step === 2) renderProfile();
+    if (state.step === 3) renderTrack();
+    if (state.step === 4) renderIndexes();
+    if (state.step === 5) renderEtfs();
+    if (state.step === 6) renderOutput();
+  }
+
+  $('#btnPrev').onclick = () => go(state.step - 1);
+  $('#btnNext').onclick = () => {
+    if (state.step === 6) {
+      state.step = 1;
+      go(1);
+      return;
+    }
+    if (state.step === 1 && !state.clientId) return;
+    if (state.step === 5 && !state.etfCodes.length) return;
+    go(state.step + 1);
+  };
+
+  // init
+  renderNav();
+  renderStep();
+  updateButtons();
+})();
+</script>
+</body>
+</html>
